@@ -1,6 +1,5 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Redirect, Switch } from 'react-router-dom';
-import JoinRoom from './onboard/joinroom'
 import { ColorContext } from './context/colorcontext'
 import Onboard from './onboard/onboard'
 import JoinGame from './onboard/joingame'
@@ -27,14 +26,11 @@ function App() {
           <Route path = "/" exact>
             <Onboard setUserName = {setUserName}/>
           </Route>
-          <Route path = "/game/:gameid" exact>
-            {didRedirect ? 
+          <Route path = "/game" exact>
               <React.Fragment>
-                    <JoinGame userName = {userName} isCreator = {true} />
+                    <JoinGame userName = {userName} />
                     <ChessGame myUserName = {userName} />
-              </React.Fragment> 
-              :
-              <JoinRoom />}
+              </React.Fragment>
           </Route>
           <Redirect to = "/" />
         </Switch>

@@ -17,11 +17,11 @@ const Piece = (props) => {
     // console.log("this piece ID:" + props.thisPieceTargetId)
     // console.log("dragged piece ID:" + props.draggedPieceTargetId)
     return <Image image={image}
-         x = {props.x - 110}
-         y = {props.y - 110}
+         x = {props.x - 105}
+         y = {props.y - 105}
          draggable = {canThisPieceEvenBeMovedByThisPlayer && isItThatPlayersTurn}
-         width = {isDragged ? 100 : 100}
-         height = {isDragged ? 100 : 100}
+         width = {isDragged ? 80 : 80}
+         height = {isDragged ? 80 : 80}
          onDragStart = {props.onDragStart}
          onDragEnd = {props.onDragEnd}
          fill = {(thisWhiteKingInCheck && "red") || (thisBlackKingInCheck && "red")}

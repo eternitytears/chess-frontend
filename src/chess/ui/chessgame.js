@@ -9,19 +9,24 @@ import Piece from './piece'
 import piecemap from './piecemap'
 import { useParams } from 'react-router-dom'
 import { ColorContext } from '../../context/colorcontext'
+import Table from '@material-ui/core/Table';
+import TableBody from '@material-ui/core/TableBody';
+import TableCell from '@material-ui/core/TableCell';
+import TableContainer from '@material-ui/core/TableContainer';
+import TableHead from '@material-ui/core/TableHead';
+import TableRow from '@material-ui/core/TableRow';
+import Paper from '@material-ui/core/Paper';
 const socket  = require('../../connection/socket').socket
-
 
 class ChessGame extends React.Component {
 
     state = {
-        gameState: new Game(this.props.color),
+        gameState: new Game(this.),
         draggedPieceTargetId: "", // empty string means no piece is being dragged
         playerTurnToMoveIsWhite: true,
-        whiteKingInCheck: false, 
+        whiteKingInCheck: false,
         blackKingInCheck: false
     }
-
 
     componentDidMount() {
         console.log(this.props.myUserName)
@@ -29,13 +34,15 @@ class ChessGame extends React.Component {
         // register event listeners
         socket.on('opponent move', move => {
             // move == [pieceId, finalPosition]
-            // console.log("opponenet's move: " + move.selectedId + ", " + move.finalPosition)
-            if (move.playerColorThatJustMovedIsWhite !== this.props.color) {
+            console.log("opponenet's move: " + move.selectedId + ", " + move.finalPosition)
+
+            if (move.playerColorThatJustMovedIsWhite !== color) {
                 this.movePiece(move.selectedId, move.finalPosition, this.state.gameState, false)
                 this.setState({
                     playerTurnToMoveIsWhite: !move.playerColorThatJustMovedIsWhite
                 })
             }
+
         })
     }
 
@@ -47,17 +54,17 @@ class ChessGame extends React.Component {
 
 
     movePiece = (selectedId, finalPosition, currentGame, isMyMove) => {
-        var whiteKingInCheck = false 
+        var whiteKingInCheck = false
         var blackKingInCheck = false
-        var blackCheckmated = false 
+        var blackCheckmated = false
         var whiteCheckmated = false
         const update = currentGame.movePiece(selectedId, finalPosition, isMyMove)
-        
+
         if (update === "moved in the same position.") {
             this.revertToPreviousState(selectedId) // pass in selected ID to identify the piece that messed up
             return
         } else if (update === "user tried to capture their own piece") {
-            this.revertToPreviousState(selectedId) 
+            this.revertToPreviousState(selectedId)
             return
         } else if (update === "b is in check" || update === "w is in check") {
             if (update[0] === "b") {
@@ -65,34 +72,34 @@ class ChessGame extends React.Component {
             } else {
                 whiteKingInCheck = true
             }
-        } else if (update === "b has been checkmated" || update === "w has been checkmated") { 
+        } else if (update === "b has been checkmated" || update === "w has been checkmated") {
             if (update[0] === "b") {
                 blackCheckmated = true
             } else {
                 whiteCheckmated = true
             }
         } else if (update === "invalid move") {
-            this.revertToPreviousState(selectedId) 
+            this.revertToPreviousState(selectedId)
             return
-        } 
+        }
 
         if (isMyMove) {
             socket.emit('new move', {
                 nextPlayerColorToMove: !this.state.gameState.thisPlayersColorIsWhite,
                 playerColorThatJustMovedIsWhite: this.state.gameState.thisPlayersColorIsWhite,
-                selectedId: selectedId, 
+                selectedId: selectedId,
                 finalPosition: finalPosition,
                 gameId: this.props.gameId
             })
         }
-        
 
-        this.props.playAudio()   
+
+        this.props.playAudio()
 
         this.setState({
             draggedPieceTargetId: "",
             gameState: currentGame,
-            playerTurnToMoveIsWhite: !this.props.color,
+            playerTurnToMoveIsWhite: !color,
             whiteKingInCheck: whiteKingInCheck,
             blackKingInCheck: blackKingInCheck
         })
@@ -142,7 +149,7 @@ class ChessGame extends React.Component {
         })
     }
 
- 
+
     inferCoord = (x, y, chessBoard) => {
         // console.log("actual mouse coordinates: " + x + ", " + y)
         var hashmap = {}
@@ -151,7 +158,7 @@ class ChessGame extends React.Component {
             for (var j = 0; j < 8; j++) {
                 const canvasCoord = chessBoard[i][j].getCanvasCoord()
                 // calculate distance
-                const delta_x = canvasCoord[0] - x 
+                const delta_x = canvasCoord[0] - x
                 const delta_y = canvasCoord[1] - y
                 const newDistance = Math.sqrt(delta_x**2 + delta_y**2)
                 hashmap[newDistance] = canvasCoord
@@ -163,39 +170,47 @@ class ChessGame extends React.Component {
 
         return hashmap[shortestDistance]
     }
-   
+
+
+
     render() {
         // console.log(this.state.gameState.getBoard())
        //  console.log("it's white's move this time: " + this.state.playerTurnToMoveIsWhite)
         // console.log(this.state.gameState.getBoard())
-        
+        //let array = this.state.coordinate.split(" ")
         return (
         <React.Fragment>
+
+        <div style={{display: "flex"}}>
         <div style = {{
             backgroundImage: `url(${Board})`,
-            width: "720px",
-            height: "720px"}}
+            width: "640px",
+            height: "640px",
+            marginLeft: "75px"
+        }}
         >
-            <Stage width = {720} height = {720}>
+            <Stage width = {640} height = {640}>
                 <Layer>
                 {this.state.gameState.getBoard().map((row) => {
                         return (<React.Fragment>
                                 {row.map((square) => {
-                                    if (square.isOccupied()) {                                    
+                                    if (square.isOccupied()) {
                                         return (
-                                            <Piece 
+                                            <Piece
                                                 x = {square.getCanvasCoord()[0]}
-                                                y = {square.getCanvasCoord()[1]} 
+                                                y = {square.getCanvasCoord()[1]}
                                                 imgurls = {piecemap[square.getPiece().name]}
                                                 isWhite = {square.getPiece().color === "white"}
                                                 draggedPieceTargetId = {this.state.draggedPieceTargetId}
                                                 onDragStart = {this.startDragging}
                                                 onDragEnd = {this.endDragging}
+
                                                 id = {square.getPieceIdOnThisSquare()}
-                                                thisPlayersColorIsWhite = {this.props.color}
+                                                thisPlayersColorIsWhite = {color}
                                                 playerTurnToMoveIsWhite = {this.state.playerTurnToMoveIsWhite}
                                                 whiteKingInCheck = {this.state.whiteKingInCheck}
                                                 blackKingInCheck = {this.state.blackKingInCheck}
+
                                                 />)
                                     }
                                     return
@@ -204,6 +219,28 @@ class ChessGame extends React.Component {
                     })}
                 </Layer>
             </Stage>
+
+        </div>
+            <div>
+                <TableContainer component={Paper} style={{height: "640px"}}>
+                    <Table  aria-label="a dense table">
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>Color</TableCell>
+                                <TableCell align="right">Move</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {this.state.gameState.state.coordinate.map((row) => (
+                                <TableRow key={row.color}>
+                                    <TableCell align="center">{row.color}</TableCell>
+                                    <TableCell align="right">{row.move}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            </div>
         </div>
         </React.Fragment>)
     }
@@ -222,58 +259,21 @@ const ChessGameWrapper = (props) => {
      */
 
 
-
     const domainName = 'http://localhost:3000'
-    const color = React.useContext(ColorContext)
-    const { gameid } = useParams()
     const [play] = useSound(chessMove);
-    const [opponentSocketId, setOpponentSocketId] = React.useState('')
     const [opponentDidJoinTheGame, didJoinGame] = React.useState(false)
     const [opponentUserName, setUserName] = React.useState('')
-    const [gameSessionDoesNotExist, doesntExist] = React.useState(false)
+    const [gameid, setGameId] = React.useState('')
+
 
     React.useEffect(() => {
-        socket.on("playerJoinedRoom", statusUpdate => {
-            console.log("A new player has joined the room! Username: " + statusUpdate.userName + ", Game id: " + statusUpdate.gameId + " Socket id: " + statusUpdate.mySocketId)
-            if (socket.id !== statusUpdate.mySocketId) {
-                setOpponentSocketId(statusUpdate.mySocketId)
-            }
-        })
-    
-        socket.on("status", statusUpdate => {
-            console.log(statusUpdate)
-            alert(statusUpdate)
-            if (statusUpdate === 'This game session does not exist.' || statusUpdate === 'There are already 2 people playing in this room.') {
-                doesntExist(true)
-            }
-        })
-        
-    
-        socket.on('start game', (opponentUserName) => {
+        socket.on('start game', (opponentUserName, color, gameId) => {
             console.log("START!")
-            if (opponentUserName !== props.myUserName) {
+                console.log(opponentUserName + " " +  color + " " + gameId)
                 setUserName(opponentUserName)
-                didJoinGame(true) 
-            } else {
-                socket.emit('request username', gameid)
-            }
-        })
-    
-    
-        socket.on('give userName', (socketId) => {
-            if (socket.id !== socketId) {
-                console.log("give userName stage: " + props.myUserName)
-                socket.emit('recieved userName', {userName: props.myUserName, gameId: gameid})
-            }
-        })
-    
-        socket.on('get Opponent UserName', (data) => {
-            if (socket.id !== data.socketId) {
-                setUserName(data.userName)
-                console.log('data.socketId: data.socketId')
-                setOpponentSocketId(data.socketId)
-                didJoinGame(true) 
-            }
+                setGameId(gameId)
+                color
+                didJoinGame(true)
         })
     }, [])
 
@@ -282,21 +282,17 @@ const ChessGameWrapper = (props) => {
       <React.Fragment>
         {opponentDidJoinTheGame ? (
           <div>
-            <h4> Opponent: {opponentUserName} </h4>
+            <h5 style={{ marginLeft: "75px", marginTop: "15px" }}> Противник: {opponentUserName} </h5>
             <div style={{ display: "flex" }}>
               <ChessGame
                 playAudio={play}
                 gameId={gameid}
-                color={color.didRedirect}
+                color={color}
               />
             </div>
-            <h4> You: {props.myUserName} </h4>
-          </div>
-        ) : gameSessionDoesNotExist ? (
-          <div>
-            <h1 style={{ textAlign: "center", marginTop: "200px" }}> :( </h1>
-          </div>
-        ) : (
+            <h5 style={{ marginLeft: "75px" }}> Вы: {props.myUserName} </h5>
+            </div>
+        ) :  (
           <div>
             <h1
               style={{
@@ -304,8 +300,7 @@ const ChessGameWrapper = (props) => {
                 marginTop: String(window.innerHeight / 8) + "px",
               }}
             >
-              Hey <strong>{props.myUserName}</strong>, copy and paste the URL
-              below to send to your friend:
+              Привет, <strong>{props.myUserName}</strong>, скопируй и отправь ссылку другу:
             </h1>
             <textarea
               style={{ marginLeft: String((window.innerWidth / 2) - 290) + "px", marginTop: "30" + "px", width: "580px", height: "30px"}}
@@ -320,7 +315,7 @@ const ChessGameWrapper = (props) => {
 
             <h1 style={{ textAlign: "center", marginTop: "100px" }}>
               {" "}
-              Waiting for other opponent to join the game...{" "}
+              Подожди, пока оппонент подключиться...{" "}
             </h1>
           </div>
         )}

@@ -6,14 +6,18 @@ import Square from './square'
  * If the player color is black, make sure to invert the board.
  */
 
-
-
+function createData(color, move) {
+    return { color, move};
+}
 
 class Game {
+
+    state = {coordinate: []}
     constructor(thisPlayersColorIsWhite) {
         this.thisPlayersColorIsWhite = thisPlayersColorIsWhite
         this.chessBoard = this.makeStartingBoard()
         this.chess = new Chess()
+
 
         this.toCoord = thisPlayersColorIsWhite ? {
             0:8, 1:7, 2: 6, 3: 5, 4: 4, 5: 3, 6: 2, 7: 1
@@ -57,9 +61,9 @@ class Game {
     movePiece(pieceId, to, isMyMove) {
 
         const to2D = isMyMove ? {
-            105:0, 195:1, 285: 2, 375: 3, 465: 4, 555: 5, 645: 6, 735: 7
+            104:0, 184:1, 264: 2, 344: 3, 424: 4, 504: 5, 584: 6, 664: 7
         } : {
-            105:7, 195:6, 285: 5, 375: 4, 465: 3, 555: 2, 645: 1, 735: 0
+            104:7, 184:6, 264: 5, 344: 4, 424: 3, 504: 2, 584: 1, 664: 0
         }
 
 
@@ -89,8 +93,8 @@ class Game {
         const moveAttempt = !isPromotion ? this.chess.move({
                 from: this.toChessMove([x, y], to2D),
                 to: this.toChessMove(to, to2D),
-                piece: pieceId[1]}) 
-            : 
+                piece: pieceId[1]})
+            :
             this.chess.move({
                 from: this.toChessMove([x, y], to2D),
                 to: this.toChessMove(to, to2D),
@@ -105,6 +109,10 @@ class Game {
         if (moveAttempt === null) {
             return "invalid move"
         }
+        else {
+            this.state.coordinate.push(createData(moveAttempt.color,moveAttempt.san))
+            console.log(this.state.coordinate)
+        }
 
 
         if (moveAttempt.flags === 'e') {
@@ -117,6 +125,7 @@ class Game {
                 y = parseInt(move[1], 10) + 1 
             }
             currentBoard[this.toCoord2[y]][x].setPiece(null)
+
         }
 
 
@@ -214,7 +223,7 @@ class Game {
 
 
     isPawnPromotion(to, piece) {
-        const res = piece === 'p' && (to[1] === 105 || to[1] === 735)
+        const res = piece === 'p' && (to[1] === 105 || to[1] === 664)
         if (res) {
             this.nQueens += 1
         }
@@ -256,7 +265,7 @@ class Game {
             for (var j = 0; j < 8; j++) {
                 // j is horizontal
                 // i is vertical
-                const coordinatesOnCanvas = [((j + 1) * 90 + 15), ((i + 1) * 90 + 15)]
+                const coordinatesOnCanvas = [((j + 1) * 80 + 24), ((i + 1) * 80 + 24)]
                 const emptySquare = new Square(j, i, null, coordinatesOnCanvas)
                 
                 startingChessBoard[i].push(emptySquare)
